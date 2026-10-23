@@ -1,0 +1,1199 @@
+<title>The Catalyst #03</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bangers&family=Barlow+Condensed:wght@500;600;700&family=Comic+Neue:ital,wght@0,700;1,700&display=swap">
+<style>
+:root {
+  /* Layout: printed comic pages stacked on a midnight reading table; every panel opens in a panel-by-panel viewer */
+  --table: #0E1733;
+  --table-dot: #19275A;
+  --table-text: #B9C4E6;
+  --table-dim: #8592BC;
+  --rule: rgba(185, 196, 230, 0.18);
+  --shadow: rgba(2, 5, 16, 0.6);
+  --paper: #FFFBF1;
+  --folio: #77705F;
+  --ink: #12131A;
+  --cape: #F26A1B;
+  --cape-hi: #FF8C42;
+  --cape-dot: #D2500C;
+  --suit: #2A62D4;
+  --caption: #FDDD55;
+  --caption-hi: #FFEA98;
+  --viewer-bg: #070B1C;
+
+  --display: "Bangers", Impact, "Arial Narrow Bold", sans-serif;
+  --letter: "Comic Neue", "Comic Sans MS", "Chalkboard SE", cursive;
+  --ui: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+
+  --gutter: clamp(8px, 1.4vw, 14px);
+  --line: 3px;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+img { max-width: 100%; }
+html.viewer-on { overflow: hidden; }
+
+body {
+  margin: 0;
+  background-color: var(--table);
+  background-image: radial-gradient(var(--table-dot) 1.3px, transparent 1.7px);
+  background-size: 14px 14px;
+  color: var(--table-text);
+  font-family: var(--ui);
+  font-size: 16px;
+  line-height: 1.5;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto;
+  height: env(safe-area-inset-top, 0px);
+  z-index: 10;
+  background: var(--table);
+}
+
+.wrap {
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+/* ---------- Top bar ---------- */
+.topbar {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 5;
+  background: var(--table);
+  border-bottom: 1px solid var(--rule);
+}
+.topbar-in {
+  max-width: 1120px;
+  margin-inline: auto;
+  padding-block: 10px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+}
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  color: var(--caption);
+  font-family: var(--display);
+  font-size: 26px;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.brand small {
+  font-family: var(--ui);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--table-text);
+}
+.pages {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+.pages a {
+  min-width: 36px;
+  padding: 5px 10px;
+  border: 1.5px solid transparent;
+  border-radius: 3px;
+  color: var(--table-text);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-align: center;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+.pages a:hover { color: var(--paper); border-color: var(--rule); }
+.pages a[aria-current="true"] {
+  background: var(--caption);
+  border-color: var(--ink);
+  color: var(--ink);
+}
+.cta {
+  appearance: none;
+  border: 2px solid var(--ink);
+  background: var(--cape);
+  color: var(--paper);
+  box-shadow: 3px 3px 0 var(--caption);
+  padding: 6px 14px 4px;
+  font-family: var(--display);
+  font-size: 19px;
+  letter-spacing: 0.05em;
+  line-height: 1.1;
+  cursor: pointer;
+  transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
+}
+.cta:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--caption); }
+.cta:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--caption); }
+:focus-visible { outline: 3px solid var(--caption); outline-offset: 3px; }
+
+/* ---------- Book ---------- */
+.book {
+  display: grid;
+  gap: clamp(36px, 6vw, 64px);
+  padding-block: clamp(24px, 4vw, 48px) 24px;
+}
+.sheet {
+  position: relative;
+  width: 100%;
+  max-width: 1000px;
+  margin-inline: auto;
+  padding: clamp(10px, 2.2vw, 24px);
+  background-color: var(--paper);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .38 0 0 0 0 .22 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  color: var(--ink);
+  box-shadow: 0 28px 60px -18px var(--shadow), 0 3px 0 var(--shadow);
+  scroll-margin-top: 84px;
+}
+
+/* ---------- Cover ---------- */
+.cover {
+  max-width: 700px;
+  padding: 0;
+  overflow: hidden;
+  border: var(--line) solid var(--ink);
+  container-type: inline-size;
+}
+.cover-band {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 3.5cqw;
+  padding: 3.4cqw 4cqw 2.6cqw;
+  background-color: var(--cape);
+  background-image: radial-gradient(var(--cape-dot) 22%, transparent 24%);
+  background-size: 2.4cqw 2.4cqw;
+  border-bottom: var(--line) solid var(--ink);
+}
+.corner-box {
+  display: grid;
+  justify-items: center;
+  padding: 1cqw 1.8cqw 0.8cqw;
+  background: var(--paper);
+  border: var(--line) solid var(--ink);
+  color: var(--ink);
+  line-height: 1;
+  transform: rotate(-3deg);
+}
+.corner-box span {
+  font-size: clamp(9px, 2.3cqw, 16px);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.corner-box b {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(30px, 9cqw, 64px);
+  line-height: 0.9;
+  color: var(--cape);
+}
+.masthead {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 400;
+  line-height: 0.8;
+}
+.masthead .the {
+  display: block;
+  margin-left: 0.3em;
+  font-size: clamp(16px, 5.4cqw, 40px);
+  letter-spacing: 0.08em;
+  color: var(--paper);
+  -webkit-text-stroke: 0.06em var(--ink);
+  paint-order: stroke fill;
+  text-shadow: 0.06em 0.06em 0 var(--ink);
+}
+.masthead .word {
+  display: block;
+  font-size: 16.2cqw;
+  letter-spacing: 0.015em;
+  color: var(--caption);
+  white-space: nowrap;
+  -webkit-text-stroke: 0.045em var(--ink);
+  paint-order: stroke fill;
+  text-shadow:
+    0.02em 0.02em 0 var(--suit),
+    0.04em 0.04em 0 var(--suit),
+    0.06em 0.06em 0 var(--suit),
+    0.08em 0.08em 0 var(--ink);
+}
+.masthead .word span {
+  display: inline-block;
+  animation: slam 0.55s cubic-bezier(0.3, 1.4, 0.4, 1) both;
+  animation-delay: calc(120ms + var(--i) * 60ms);
+}
+@keyframes slam {
+  0% { transform: translateY(-0.45em) scale(1.35) rotate(-8deg); }
+  65% { transform: translateY(0.03em) scale(0.97); }
+  100% { transform: none; }
+}
+.tagline {
+  margin: 0;
+  padding: 1.5cqw 3cqw 1.1cqw;
+  background: var(--suit);
+  border-bottom: var(--line) solid var(--ink);
+  color: var(--paper);
+  font-family: var(--display);
+  font-size: clamp(15px, 4.5cqw, 32px);
+  letter-spacing: 0.04em;
+  line-height: 1.05;
+  text-align: center;
+  text-shadow: 0.07em 0.07em 0 var(--ink);
+  text-wrap: balance;
+}
+.cover-art {
+  position: relative;
+  aspect-ratio: 1275 / 1400;
+  background: var(--ink);
+}
+.cover-art > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.code-stamp {
+  position: absolute;
+  top: 3cqw;
+  right: 3cqw;
+  width: clamp(64px, 13cqw, 92px);
+  padding: 4px 3px 3px;
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  color: var(--ink);
+  font-size: clamp(7px, 1.45cqw, 10px);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.15;
+  text-align: center;
+  text-transform: uppercase;
+}
+.code-stamp b {
+  display: block;
+  margin-block: 2px;
+  padding-block: 2px 1px;
+  border-block: 1.5px solid var(--ink);
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 1.75em;
+  letter-spacing: 0.04em;
+}
+.burst {
+  position: absolute;
+  left: 2.5cqw;
+  bottom: 3.5cqw;
+  width: 28cqw;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  transform: rotate(-12deg);
+  animation: burst-in 0.7s var(--ease) 0.75s both;
+}
+@keyframes burst-in {
+  from { transform: scale(0.3) rotate(-60deg); }
+  to { transform: rotate(-12deg); }
+}
+.burst svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.burst polygon { fill: var(--caption); stroke: var(--ink); stroke-width: 2.6; stroke-linejoin: round; }
+.burst-text {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  color: var(--ink);
+  font-family: var(--display);
+  font-size: 5.6cqw;
+  letter-spacing: 0.03em;
+  line-height: 0.82;
+}
+.burst-text b {
+  font-weight: 400;
+  font-size: 2.6em;
+  color: var(--cape);
+  -webkit-text-stroke: 0.045em var(--ink);
+  paint-order: stroke fill;
+  text-shadow: 0.05em 0.05em 0 var(--ink);
+}
+.cover-foot {
+  margin: 0;
+  padding: 1.8cqw 3cqw 1.6cqw;
+  background: var(--ink);
+  border-top: var(--line) solid var(--ink);
+  color: var(--caption);
+  font-size: clamp(11px, 2.5cqw, 17px);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-align: center;
+  text-transform: uppercase;
+}
+.hint {
+  margin: -12px auto 0;
+  max-width: 700px;
+  color: var(--table-dim);
+  font-size: 15px;
+  letter-spacing: 0.06em;
+  text-align: center;
+}
+
+/* ---------- Page chrome ---------- */
+.page-head {
+  display: flex;
+  align-items: stretch;
+  width: fit-content;
+  max-width: 100%;
+  margin-bottom: var(--gutter);
+  background: var(--caption);
+  border: var(--line) solid var(--ink);
+  transform: rotate(-0.6deg);
+  transform-origin: left center;
+}
+.page-no {
+  display: flex;
+  align-items: center;
+  padding: 6px 12px 4px;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.page-head h2 {
+  margin: 0;
+  padding: 8px 16px 5px;
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(22px, 3.4vw, 36px);
+  letter-spacing: 0.035em;
+  line-height: 1;
+  text-wrap: balance;
+}
+.folio {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+  color: var(--folio);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+.folio b {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 22px;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+}
+
+/* ---------- Panels ---------- */
+.panels { display: grid; gap: var(--gutter); }
+.row { display: grid; gap: var(--gutter); }
+.row.two, .row.split { grid-template-columns: 1fr 1fr; }
+.row.lead { grid-template-columns: 62fr 38fr; }
+
+.panel {
+  appearance: none;
+  position: relative;
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: var(--line);
+  border: 0;
+  border-radius: 0;
+  background: var(--ink);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: zoom-in;
+}
+.panel:focus-visible { outline-color: var(--cape); }
+.panel::after {
+  content: "";
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  width: 34px;
+  height: 34px;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: var(--paper) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2312131A' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='10.5' cy='10.5' r='6'/%3E%3Cpath d='M15 15l5 5M10.5 8v5M8 10.5h5'/%3E%3C/svg%3E") center / 18px no-repeat;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity 0.25s var(--ease), transform 0.25s var(--ease);
+  pointer-events: none;
+}
+.art {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: var(--ar, auto);
+  overflow: hidden;
+  background: var(--paper);
+  container-type: inline-size;
+}
+.art > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.7s var(--ease);
+}
+@media (hover: hover) {
+  .panel:hover::after, .panel:focus-visible::after { opacity: 1; transform: none; }
+  .panel:hover .art > img { transform: scale(1.025); }
+}
+
+/* Lettering added on top of the art, matched to the art's own caption boxes */
+.lettered {
+  display: block;
+  background: var(--caption);
+  color: var(--ink);
+  font-family: var(--letter);
+  font-style: italic;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* Page 1 close-up insert: Marshall, translated */
+.art.insert { display: flex; flex-direction: column; }
+.insert .crop {
+  position: relative;
+  display: block;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+.insert .crop img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 100% 100%;
+  transform: scale(2.4);
+  transform-origin: 100% 100%;
+}
+.insert .lettered {
+  border-top: var(--line) solid var(--ink);
+  padding: 5cqw 6cqw 4.4cqw;
+  font-size: clamp(14px, 7.4cqw, 34px);
+}
+
+/* Page 4 inset: the trophies' nameplates */
+.art.awards {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--caption);
+  background-image:
+    radial-gradient(rgba(242, 106, 27, 0.22) 24%, transparent 26%),
+    repeating-conic-gradient(from 0deg at 50% 55%, var(--caption) 0deg 9deg, var(--caption-hi) 9deg 18deg);
+  background-size: 9px 9px, auto;
+}
+.awards .lettered {
+  align-self: flex-start;
+  max-width: 88%;
+  padding: 3cqw 5cqw 2.6cqw;
+  background: var(--paper);
+  border-right: var(--line) solid var(--ink);
+  border-bottom: var(--line) solid var(--ink);
+  font-size: clamp(13px, 5.6cqw, 24px);
+}
+.plates {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6cqw;
+  padding: 6cqw 7cqw 7cqw;
+}
+.plate {
+  display: grid;
+  justify-items: center;
+  gap: 1.8cqw;
+  padding: 6cqw 4cqw 5cqw;
+  background: var(--ink);
+  outline: 2px solid var(--caption);
+  outline-offset: -2.4cqw;
+  box-shadow: 1.6cqw 1.6cqw 0 var(--cape);
+  text-align: center;
+}
+.trophy { width: 15cqw; height: auto; }
+.trophy .cup { fill: var(--caption); stroke: var(--caption); stroke-width: 1.4; stroke-linejoin: round; }
+.trophy .handle { fill: none; stroke: var(--caption); stroke-width: 2.6; stroke-linecap: round; }
+.trophy .shine { fill: none; stroke: var(--paper); stroke-width: 1.8; stroke-linecap: round; }
+.plate-name {
+  display: block;
+  color: var(--paper);
+  font-family: var(--display);
+  font-size: clamp(22px, 11.5cqw, 52px);
+  letter-spacing: 0.04em;
+  line-height: 0.95;
+}
+.plate-date {
+  display: block;
+  color: var(--caption);
+  font-size: clamp(12px, 4.8cqw, 20px);
+  font-weight: 700;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+}
+
+/* Finale banner */
+.finale {
+  appearance: none;
+  position: relative;
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: clamp(18px, 4.4vw, 44px) clamp(12px, 3vw, 32px) clamp(14px, 3vw, 28px);
+  overflow: hidden;
+  background-color: var(--cape);
+  background-image:
+    radial-gradient(rgba(18, 19, 26, 0.16) 22%, transparent 24%),
+    repeating-conic-gradient(from -4deg at 50% 50%, var(--cape) 0deg 7deg, var(--cape-hi) 7deg 14deg);
+  background-size: 10px 10px, auto;
+  border: var(--line) solid var(--ink);
+  outline-offset: 4px;
+  color: var(--ink);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  container-type: inline-size;
+}
+.finale-1, .finale-2 {
+  display: block;
+  font-family: var(--display);
+  letter-spacing: 0.035em;
+  paint-order: stroke fill;
+  text-wrap: balance;
+}
+.finale-1 {
+  color: var(--paper);
+  font-size: clamp(22px, 6.4cqw, 64px);
+  line-height: 1;
+  -webkit-text-stroke: 0.06em var(--ink);
+  text-shadow: 0.06em 0.06em 0 var(--ink);
+}
+.finale-2 {
+  margin-top: 0.14em;
+  color: var(--caption);
+  font-size: clamp(32px, 9.2cqw, 96px);
+  line-height: 0.95;
+  -webkit-text-stroke: 0.05em var(--ink);
+  text-shadow:
+    0.025em 0.025em 0 var(--suit),
+    0.05em 0.05em 0 var(--suit),
+    0.075em 0.075em 0 var(--suit),
+    0.1em 0.1em 0 var(--ink);
+}
+.finale-hint {
+  display: block;
+  margin-top: 14px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+.finale.pop { animation: pop 0.7s var(--ease); }
+@keyframes pop {
+  0% { transform: none; }
+  35% { transform: scale(1.03) rotate(-0.6deg); }
+  100% { transform: none; }
+}
+
+.end-note {
+  margin: 0 auto;
+  max-width: 1000px;
+  text-align: center;
+  color: var(--caption);
+  font-family: var(--display);
+  font-size: clamp(26px, 4vw, 40px);
+  letter-spacing: 0.05em;
+  line-height: 1.1;
+}
+.end-note small {
+  display: block;
+  margin-top: 6px;
+  color: var(--table-dim);
+  font-family: var(--ui);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+/* ---------- Extras ---------- */
+.extras {
+  max-width: 900px;
+  margin-inline: auto;
+  padding-block: clamp(40px, 7vw, 72px) 8px;
+  scroll-margin-top: 84px;
+}
+.extras-head { margin-bottom: 24px; max-width: 62ch; }
+.eyebrow {
+  margin: 0 0 6px;
+  color: var(--cape-hi);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+.extras-head h2 {
+  margin: 0;
+  color: var(--paper);
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(32px, 5vw, 52px);
+  letter-spacing: 0.035em;
+  line-height: 1;
+}
+.extras-head p:last-child { margin: 10px 0 0; font-size: 17px; }
+.extras-grid {
+  display: grid;
+  grid-template-columns: 0.7464fr 1.7926fr;
+  gap: 28px 24px;
+  align-items: start;
+}
+.extras-grid figure { margin: 0; display: grid; gap: 10px; }
+.extras-grid figure:nth-child(odd) { transform: rotate(-0.5deg); }
+.extras-grid figure:nth-child(even) { transform: rotate(0.6deg); }
+.extras .panel { padding: 6px; background: var(--paper); }
+.extras figcaption { font-size: 15px; font-weight: 600; letter-spacing: 0.08em; }
+.extras figcaption b { color: var(--caption); font-weight: 700; }
+
+.indicia {
+  max-width: 900px;
+  margin: 48px auto 0;
+  padding-block: 20px 56px;
+  border-top: 1px solid var(--rule);
+}
+.indicia p {
+  margin: 0;
+  max-width: 78ch;
+  color: var(--table-dim);
+  font-size: 13px;
+  letter-spacing: 0.03em;
+  line-height: 1.6;
+}
+
+/* ---------- Panel viewer ---------- */
+.viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  padding:
+    env(safe-area-inset-top, 0px)
+    max(12px, env(safe-area-inset-right, 0px))
+    env(safe-area-inset-bottom, 0px)
+    max(12px, env(safe-area-inset-left, 0px));
+  background-color: var(--viewer-bg);
+  background-image: radial-gradient(var(--table-dot) 1.2px, transparent 1.6px);
+  background-size: 16px 16px;
+}
+.viewer-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-block: 12px;
+}
+.viewer-label { margin: 0; min-width: 0; line-height: 1.15; }
+.viewer-label span {
+  display: block;
+  color: var(--table-text);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.viewer-label b {
+  display: block;
+  color: var(--caption);
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(20px, 3vw, 28px);
+  letter-spacing: 0.04em;
+}
+.viewer-close {
+  appearance: none;
+  flex: none;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 6px 14px;
+  border: 1.5px solid var(--rule);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--paper);
+  font: 600 15px/1 var(--ui);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.viewer-close:hover { border-color: var(--table-text); }
+.viewer-stage {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: pan-y;
+  user-select: none;
+}
+.viewer-frame {
+  padding: var(--line);
+  background: var(--ink);
+  box-shadow: 0 0 0 2px var(--paper), 0 30px 60px -20px var(--shadow);
+}
+.viewer-frame .art img { transition: none; }
+.viewer-frame.from-next { animation: from-next 0.45s var(--ease); }
+.viewer-frame.from-prev { animation: from-prev 0.45s var(--ease); }
+@keyframes from-next { from { transform: translateX(28px); opacity: 0.4; } }
+@keyframes from-prev { from { transform: translateX(-28px); opacity: 0.4; } }
+.viewer-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding-block: 14px 18px;
+}
+.vbtn {
+  appearance: none;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 6px 18px 4px;
+  border: 2px solid var(--ink);
+  background: var(--caption);
+  box-shadow: 3px 3px 0 var(--cape);
+  color: var(--ink);
+  font-family: var(--display);
+  font-size: 20px;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+}
+.vbtn:disabled { opacity: 0.3; cursor: default; box-shadow: none; }
+.viewer-count {
+  min-width: 6ch;
+  color: var(--table-text);
+  font-size: 16px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.12em;
+  text-align: center;
+}
+
+/* ---------- Wide screens: diagonal gutter on the crisis page ---------- */
+@media (min-width: 641px) {
+  .panels .row.split {
+    display: block;
+    position: relative;
+    aspect-ratio: 1.95;
+    container-type: inline-size;
+  }
+  .split .panel {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: calc(52% - var(--gutter) / 2);
+  }
+  .split .art { height: 100%; aspect-ratio: auto; }
+  .split .panel:first-child,
+  .split .panel:first-child .art { clip-path: polygon(0 0, calc(100% - 4cqw) 0, 100% 100%, 0 100%); }
+  .split .panel:last-child,
+  .split .panel:last-child .art { clip-path: polygon(0 0, 100% 0, 100% 100%, 4cqw 100%); }
+  .split .panel:first-child { left: 0; }
+  .split .panel:last-child { right: 0; }
+  .split .panel:first-child::after { right: auto; left: 12px; }
+  .panels .row.lead .art { height: 100%; }
+}
+
+/* ---------- Phones ---------- */
+@media (max-width: 640px) {
+  .topbar-in { gap: 8px 12px; }
+  .brand { font-size: 23px; }
+  .pages { order: 3; width: 100%; margin-left: 0; justify-content: space-between; }
+  .pages a { padding: 5px 6px; font-size: 13px; }
+  .cta { margin-left: auto; font-size: 17px; }
+  .sheet, .extras { scroll-margin-top: 104px; }
+  .row.two, .row.split, .row.lead { grid-template-columns: 1fr; }
+  .panels .art.insert { flex-direction: row; }
+  .panels .insert .crop { flex: 0 0 46%; aspect-ratio: 3 / 4; }
+  .panels .insert .lettered {
+    display: flex;
+    align-items: center;
+    border-top: 0;
+    border-left: var(--line) solid var(--ink);
+    font-size: clamp(16px, 5.6cqw, 26px);
+  }
+  .extras-grid { grid-template-columns: 1fr; }
+  .page-head h2 { padding-inline: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+
+<header class="topbar">
+  <div class="topbar-in wrap">
+    <a class="brand" href="#cover" data-jump="cover">The Catalyst <small>No. 03</small></a>
+    <nav class="pages" aria-label="Pages">
+      <a href="#cover" data-nav="cover">Cover</a>
+      <a href="#page-1" data-nav="page-1" aria-label="Page 1">1</a>
+      <a href="#page-2" data-nav="page-2" aria-label="Page 2">2</a>
+      <a href="#page-3" data-nav="page-3" aria-label="Page 3">3</a>
+      <a href="#page-4" data-nav="page-4" aria-label="Page 4">4</a>
+      <a href="#extras" data-nav="extras">Extras</a>
+    </nav>
+    <button class="cta" id="open-viewer" type="button">Panel view</button>
+  </div>
+</header>
+
+<main class="book wrap">
+
+  <!-- COVER -->
+  <section class="sheet cover" id="cover" aria-label="Cover">
+    <div class="cover-band">
+      <div class="corner-box"><span>GPS</span><b>03</b><span>Oct</span></div>
+      <h1 class="masthead" aria-label="The Catalyst">
+        <span class="the" aria-hidden="true">The</span>
+        <span class="word" aria-hidden="true"><span style="--i:0">C</span><span style="--i:1">A</span><span style="--i:2">T</span><span style="--i:3">A</span><span style="--i:4">L</span><span style="--i:5">Y</span><span style="--i:6">S</span><span style="--i:7">T</span></span>
+      </h1>
+    </div>
+    <p class="tagline">Three Years Defending the Realm of Learning</p>
+    <div class="cover-art">
+      <img src="art/cover-reveal.jpg" width="1275" height="1400" alt="Cover art: Bhanu grins at his desk as he pulls open his black hoodie to reveal The Catalyst's silver-and-orange super suit. A glowing time portal blazes behind him, and Marshall the corgi, in a red cape, waits at his feet.">
+      <div class="code-stamp">Approved by the <b>Treehouse</b> Code Authority</div>
+      <div class="burst">
+        <svg viewBox="0 0 100 100" aria-hidden="true"><polygon points="50.0,3.0 55.8,16.9 65.7,6.7 66.6,21.2 79.8,14.5 76.4,27.8 91.4,26.1 82.9,38.0 97.2,41.7 84.7,50.0 97.1,58.3 81.4,61.4 90.5,73.4 77.8,73.3 80.6,86.5 66.9,79.4 65.8,93.3 56.4,86.2 50.0,96.3 44.0,84.1 34.6,92.4 33.4,78.7 20.8,84.8 23.8,72.0 8.8,73.8 18.5,61.4 3.6,58.2 13.7,50.0 3.3,41.8 16.8,37.9 10.1,27.0 23.6,27.8 20.2,14.5 33.4,21.2 33.6,5.1 44.1,16.7"/></svg>
+        <span class="burst-text"><b>3</b>Years!</span>
+      </div>
+    </div>
+    <p class="cover-foot">Issue #03 &bull; Special Anniversary Collector&rsquo;s Edition</p>
+  </section>
+
+  <p class="hint">Scroll to read. Tap any panel to see it up close.</p>
+
+  <!-- PAGE 1 -->
+  <section class="sheet" id="page-1" aria-labelledby="p1-title">
+    <header class="page-head"><span class="page-no">Page 1</span><h2 id="p1-title">The Origin &amp; the Future</h2></header>
+    <div class="panels">
+      <div class="row two">
+        <button class="panel" type="button" data-ar="1" data-label="Page 1 · Panel 1" data-title="The Origin &amp; the Future">
+          <span class="art" style="--ar: 1"><img src="art/p1-hello-from-the-future.jpg" width="1400" height="1400" loading="lazy" alt="The Catalyst bursts out of a swirling time portal flashing a peace sign, Marshall the corgi flying beside him. Caption: October 2023. A new hero landed in GPS Training… Bhanu: “Hello from the future!”"></span>
+        </button>
+        <button class="panel" type="button" data-ar="1" data-label="Page 1 · Panel 2" data-title="The Origin &amp; the Future">
+          <span class="art" style="--ar: 1"><img src="art/p1-time-vortex.jpg" width="1400" height="1400" loading="lazy" alt="Clock faces spin backwards into a glowing time vortex. Caption: By day, he is Bhanu Datta, Senior Instructional Designer, GPS Operations. By night—which is his day on IST—he is the time-traveling guardian of GPS!"></span>
+        </button>
+      </div>
+      <div class="row lead">
+        <button class="panel" type="button" data-ar="1" data-label="Page 1 · Panel 3" data-title="The Origin &amp; the Future">
+          <span class="art" style="--ar: 1"><img src="art/p1-treehouse-hq.jpg" width="1800" height="1800" loading="lazy" alt="Bhanu works at his desk in a cozy wooden treehouse office at sunset while Marshall sits on the floor beside him. Caption: Headquarters: The Treehouse. Powered by Snaps, Giggles, and endless coffee. Marshall: “Bark!”"></span>
+        </button>
+        <button class="panel" type="button" data-ar="0.62" data-label="Page 1 · Panel 3 · Close-up" data-title="The Origin &amp; the Future">
+          <span class="art insert">
+            <span class="crop"><img src="art/p1-treehouse-hq.jpg" width="1800" height="1800" loading="lazy" alt="Close-up: Marshall the corgi looks up and barks."></span>
+            <span class="lettered">*Translation: “I run this show.”</span>
+          </span>
+        </button>
+      </div>
+    </div>
+    <footer class="folio"><span>The Catalyst #03</span><b>1</b></footer>
+  </section>
+
+  <!-- PAGE 2 -->
+  <section class="sheet" id="page-2" aria-labelledby="p2-title">
+    <header class="page-head"><span class="page-no">Page 2</span><h2 id="p2-title">Crisis in the Realm of Learning</h2></header>
+    <div class="panels">
+      <button class="panel" type="button" data-ar="1.4909" data-label="Page 2 · Panel 1" data-title="Crisis in the Realm of Learning">
+        <span class="art" style="--ar: 1400 / 939"><img src="art/p2-treehouse-alarm.jpg" width="1400" height="939" loading="lazy" alt="Alarms flash across the treehouse monitors, reading Warning, Critical Error, and 404 Udemy Missing, as The Catalyst leaps up from his desk and Marshall barks. Caption: Meanwhile, deep within the Treehouse… Sound effect: ALARM! Marshall: “Bark! Bark!”"></span>
+      </button>
+      <div class="row split">
+        <button class="panel" type="button" data-ar="1" data-label="Page 2 · Panel 2" data-title="Crisis in the Realm of Learning">
+          <span class="art" style="--ar: 1"><img src="art/p2-this-is-fine.jpg" width="1400" height="1400" loading="lazy" alt="A learner sits calmly at a desk holding a coffee mug while flames and falling binary code engulf the room and the monitor shows a 404 error. Learner: “This is fine…”"></span>
+        </button>
+        <button class="panel" type="button" data-ar="1" data-label="Page 2 · Panel 3" data-title="Crisis in the Realm of Learning">
+          <span class="art" style="--ar: 1"><img src="art/p2-crisis-adaptation.jpg" width="1400" height="1400" loading="lazy" alt="The Catalyst flies through a burning digital cityscape, firing a beam of blue energy from his fist. Caption: Critical alert! Udemy licenses vanish in the middle of the pilot! The learning network is burning! The Catalyst: “Necessity is indeed the mother of invention!”"></span>
+        </button>
+      </div>
+    </div>
+    <footer class="folio"><span>The Catalyst #03</span><b>2</b></footer>
+  </section>
+
+  <!-- PAGE 3 -->
+  <section class="sheet" id="page-3" aria-labelledby="p3-title">
+    <header class="page-head"><span class="page-no">Page 3</span><h2 id="p3-title">Saving the Day</h2></header>
+    <div class="panels">
+      <button class="panel" type="button" data-ar="1.7921" data-label="Page 3 · Panel 1" data-title="Saving the Day">
+        <span class="art" style="--ar: 2000 / 1116"><img src="art/p3-command-center.jpg" width="2000" height="1116" loading="lazy" alt="In a high-tech global command center, The Catalyst leaps forward conjuring glowing shields as small helper robots float around a holographic world map. Caption: Using advanced AI and his signature Agent Summoning and Mentor Forging powers, Bhanu leaps into action. Sound effect: ZWOOSH!"></span>
+      </button>
+      <button class="panel" type="button" data-ar="1.7921" data-label="Page 3 · Panel 2" data-title="Saving the Day">
+        <span class="art" style="--ar: 2000 / 1116"><img src="art/p3-addi-pipeline.jpg" width="2000" height="1116" loading="lazy" alt="Tiny tie-wearing robots cheer as glowing learning pathways snap into place across a world map. Robot: “ADDI pipeline running smoothly, Boss!”"></span>
+      </button>
+    </div>
+    <footer class="folio"><span>The Catalyst #03</span><b>3</b></footer>
+  </section>
+
+  <!-- PAGE 4 -->
+  <section class="sheet" id="page-4" aria-labelledby="p4-title">
+    <header class="page-head"><span class="page-no">Page 4</span><h2 id="p4-title">The Legacy &amp; the Creed</h2></header>
+    <div class="panels">
+      <div class="row lead">
+        <button class="panel" type="button" data-ar="1" data-label="Page 4 · Panel 1" data-title="The Legacy &amp; the Creed">
+          <span class="art" style="--ar: 1"><img src="art/p4-awards.jpg" width="1400" height="1400" loading="lazy" alt="In the treehouse, cheering colleagues clap as a teammate presents Bhanu with two gold trophies. Bhanu rests a hand on his heart, Marshall at his side. Teammate: “Thank you for bringing so much warmth and passion to our team!”"></span>
+        </button>
+        <button class="panel" type="button" data-ar="0.62" data-label="Page 4 · Panel 1 · Inset" data-title="The Legacy &amp; the Creed">
+          <span class="art awards">
+            <span class="lettered">Presented to The Catalyst…</span>
+            <span class="plates">
+              <span class="plate">
+                <svg class="trophy" viewBox="0 0 48 48" aria-hidden="true"><path class="handle" d="M14 10.5H8.5c0 6 2.8 9.5 7.2 10M34 10.5h5.5c0 6-2.8 9.5-7.2 10"/><path class="cup" d="M14 7h20v9c0 7.2-4.5 12.5-10 12.5S14 23.2 14 16z"/><path class="cup" d="M21.5 28h5v6h-5zM16 34h16v6.5H16z"/><path class="shine" d="M19 11v5.5c0 2.6 1 5 2.6 6.6"/></svg>
+                <span class="plate-name">Builder Award</span>
+                <span class="plate-date">Q1 &middot; FY27</span>
+              </span>
+              <span class="plate">
+                <svg class="trophy" viewBox="0 0 48 48" aria-hidden="true"><path class="handle" d="M14 10.5H8.5c0 6 2.8 9.5 7.2 10M34 10.5h5.5c0 6-2.8 9.5-7.2 10"/><path class="cup" d="M14 7h20v9c0 7.2-4.5 12.5-10 12.5S14 23.2 14 16z"/><path class="cup" d="M21.5 28h5v6h-5zM16 34h16v6.5H16z"/><path class="shine" d="M19 11v5.5c0 2.6 1 5 2.6 6.6"/></svg>
+                <span class="plate-name">APEX Spot Award</span>
+                <span class="plate-date">Q2 &middot; FY27</span>
+              </span>
+            </span>
+          </span>
+        </button>
+      </div>
+      <button class="panel" type="button" data-ar="2.002" data-label="Page 4 · Panel 2" data-title="The Legacy &amp; the Creed">
+        <span class="art" style="--ar: 2000 / 999"><img src="art/p4-global-team.jpg" width="2000" height="999" loading="lazy" alt="Bhanu laughs with his global team on a festive street strung with lights, everyone cheering, Marshall out in front. Bhanu: “You guys are the best Pokémon (people) I could have asked for!”"></span>
+      </button>
+      <button class="finale" type="button" id="finale">
+        <span class="finale-1">Still building. Still shipping.</span>
+        <span class="finale-2">Happy 3-Year Anniversary, Catalyst!</span>
+        <span class="finale-hint">Tap to celebrate</span>
+      </button>
+    </div>
+    <footer class="folio"><span>The Catalyst #03</span><b>4</b></footer>
+  </section>
+
+  <p class="end-note">The end… for now.<small>Next issue: Year Four</small></p>
+</main>
+
+<!-- EXTRAS -->
+<section class="extras wrap" id="extras" aria-labelledby="extras-title">
+  <div class="extras-head">
+    <p class="eyebrow">Collector&rsquo;s Edition Extras</p>
+    <h2 id="extras-title">From the Treehouse Archives</h2>
+    <p>Alternate art from the making of this issue.</p>
+  </div>
+  <div class="extras-grid">
+    <figure>
+      <button class="panel" type="button" data-ar="0.7464" data-label="Extras · Variant cover" data-title="Through the Time Vortex">
+        <span class="art" style="--ar: 1045 / 1400"><img src="art/x-time-vortex-variant.jpg" width="1045" height="1400" loading="lazy" alt="The Catalyst and Marshall soar out of a time portal surrounded by flying clocks."></span>
+      </button>
+      <figcaption><b>Variant cover.</b> Through the Time Vortex</figcaption>
+    </figure>
+    <figure>
+      <button class="panel" type="button" data-ar="1.7926" data-label="Extras · Sketchbook" data-title="The Tuk-Tuk Express">
+        <span class="art" style="--ar: 1400 / 781"><img src="art/x-tuk-tuk-express.jpg" width="1400" height="781" loading="lazy" alt="Bhanu flashes a peace sign from the back of a green-and-yellow auto-rickshaw racing through a busy street, a grinning colleague at the wheel."></span>
+      </button>
+      <figcaption><b>Sketchbook.</b> The Tuk-Tuk Express</figcaption>
+    </figure>
+  </div>
+</section>
+
+<footer class="indicia wrap">
+  <p>THE CATALYST No. 03, October 2026. Special Anniversary Collector&rsquo;s Edition, marking three years since a new hero landed in GPS Training in October 2023. Published from The Treehouse, powered by Snaps, Giggles, and endless coffee. Marshall appears courtesy of Marshall. Any resemblance to actual GPS teammates is entirely intentional.</p>
+</footer>
+
+<!-- PANEL VIEWER -->
+<div class="viewer" id="viewer" role="dialog" aria-modal="true" aria-labelledby="viewer-label" hidden>
+  <div class="viewer-top">
+    <p class="viewer-label" id="viewer-label"><span id="viewer-where">Page 1 · Panel 1</span><b id="viewer-title">The Origin &amp; the Future</b></p>
+    <button class="viewer-close" id="viewer-close" type="button">Close ✕</button>
+  </div>
+  <div class="viewer-stage" id="viewer-stage"></div>
+  <div class="viewer-bar">
+    <button class="vbtn" id="viewer-prev" type="button" aria-label="Previous panel">← Prev</button>
+    <span class="viewer-count" id="viewer-count" aria-live="polite">1 / 11</span>
+    <button class="vbtn" id="viewer-next" type="button" aria-label="Next panel">Next →</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s);
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* Page navigation + scroll spy */
+  const navLinks = [...document.querySelectorAll('[data-nav]')];
+  const jump = (id) => {
+    const target = document.getElementById(id);
+    if (target) target.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+  };
+  document.querySelectorAll('[data-nav], [data-jump]').forEach((a) => {
+    a.addEventListener('click', (e) => { e.preventDefault(); jump(a.dataset.nav || a.dataset.jump); });
+  });
+  let current = 'cover';
+  const setCurrent = (id) => {
+    current = id;
+    navLinks.forEach((a) => a.setAttribute('aria-current', a.dataset.nav === id ? 'true' : 'false'));
+  };
+  setCurrent('cover');
+  if ('IntersectionObserver' in window) {
+    const spy = new IntersectionObserver((entries) => {
+      entries.forEach((en) => { if (en.isIntersecting) setCurrent(en.target.id); });
+    }, { rootMargin: '-40% 0px -55% 0px' });
+    navLinks.forEach((a) => { const s = document.getElementById(a.dataset.nav); if (s) spy.observe(s); });
+  }
+
+  /* Panel-by-panel viewer */
+  const viewer = $('#viewer');
+  const stage = $('#viewer-stage');
+  const whereEl = $('#viewer-where');
+  const titleEl = $('#viewer-title');
+  const countEl = $('#viewer-count');
+  const prevBtn = $('#viewer-prev');
+  const nextBtn = $('#viewer-next');
+  const closeBtn = $('#viewer-close');
+  const groups = {
+    story: [...document.querySelectorAll('.book .panel')],
+    extras: [...document.querySelectorAll('.extras .panel')],
+  };
+  let group = 'story';
+  let index = 0;
+  let returnFocus = null;
+
+  const fit = () => {
+    const frame = stage.firstElementChild;
+    if (!frame) return;
+    const ar = parseFloat(frame.dataset.ar) || 1;
+    const room = 6;
+    const w = Math.max(120, Math.min(stage.clientWidth - room, (stage.clientHeight - room) * ar));
+    const art = frame.querySelector('.art');
+    art.style.width = w + 'px';
+    art.style.height = w / ar + 'px';
+  };
+
+  const show = (i, from) => {
+    const list = groups[group];
+    index = Math.max(0, Math.min(list.length - 1, i));
+    const panel = list[index];
+    const frame = document.createElement('div');
+    frame.className = 'viewer-frame' + (from && !reduceMotion ? ' from-' + from : '');
+    frame.dataset.ar = panel.dataset.ar;
+    const art = panel.querySelector('.art').cloneNode(true);
+    art.style.aspectRatio = 'auto';
+    art.querySelectorAll('img').forEach((img) => img.removeAttribute('loading'));
+    frame.append(art);
+    stage.replaceChildren(frame);
+    fit();
+    whereEl.textContent = panel.dataset.label;
+    titleEl.textContent = panel.dataset.title || '';
+    countEl.textContent = (index + 1) + ' / ' + list.length;
+    prevBtn.disabled = index === 0;
+    nextBtn.disabled = index === list.length - 1;
+  };
+
+  const open = (g, i) => {
+    group = g;
+    returnFocus = document.activeElement;
+    viewer.hidden = false;
+    document.documentElement.classList.add('viewer-on');
+    show(i);
+    closeBtn.focus();
+  };
+  const close = () => {
+    viewer.hidden = true;
+    document.documentElement.classList.remove('viewer-on');
+    stage.replaceChildren();
+    if (returnFocus && returnFocus.focus) returnFocus.focus({ preventScroll: true });
+  };
+  const step = (d) => {
+    const next = index + d;
+    if (next < 0 || next >= groups[group].length) return;
+    show(next, d > 0 ? 'next' : 'prev');
+  };
+
+  Object.entries(groups).forEach(([g, list]) => {
+    list.forEach((panel, i) => panel.addEventListener('click', () => open(g, i)));
+  });
+  prevBtn.addEventListener('click', () => step(-1));
+  nextBtn.addEventListener('click', () => step(1));
+  closeBtn.addEventListener('click', close);
+  $('#open-viewer').addEventListener('click', () => {
+    if (current === 'extras') return open('extras', 0);
+    const section = document.getElementById(current);
+    const first = section ? section.querySelector('.panel') : null;
+    open('story', first ? Math.max(0, groups.story.indexOf(first)) : 0);
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (viewer.hidden) return;
+    if (e.key === 'Escape') { e.preventDefault(); close(); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); step(1); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); }
+    else if (e.key === 'Tab') {
+      const stops = [closeBtn, prevBtn, nextBtn].filter((b) => !b.disabled);
+      const at = stops.indexOf(document.activeElement);
+      e.preventDefault();
+      const to = e.shiftKey ? (at <= 0 ? stops.length - 1 : at - 1) : (at + 1) % stops.length;
+      stops[to].focus();
+    }
+  });
+
+  let swipeX = null;
+  stage.addEventListener('pointerdown', (e) => { swipeX = e.clientX; });
+  stage.addEventListener('pointerup', (e) => {
+    if (swipeX === null) return;
+    const dx = e.clientX - swipeX;
+    swipeX = null;
+    if (Math.abs(dx) > 50) step(dx < 0 ? 1 : -1);
+  });
+  stage.addEventListener('click', (e) => { if (e.target === stage) close(); });
+  window.addEventListener('resize', fit);
+
+  /* Finale: confetti the first time it comes into view, and on every tap */
+  const finale = $('#finale');
+  const colors = ['#F26A1B', '#FDDD55', '#2A62D4', '#8FE3FF', '#FFFBF1'];
+  const celebrate = () => {
+    if (!reduceMotion) {
+      finale.classList.remove('pop');
+      void finale.offsetWidth;
+      finale.classList.add('pop');
+    }
+    if (typeof window.confetti !== 'function') return;
+    const r = finale.getBoundingClientRect();
+    const y = Math.min(0.9, Math.max(0.1, (r.top + r.height / 2) / innerHeight));
+    const base = { colors, disableForReducedMotion: true, ticks: 220, scalar: 1.1 };
+    confetti({ ...base, particleCount: 120, spread: 90, startVelocity: 45, origin: { x: 0.5, y } });
+    setTimeout(() => {
+      confetti({ ...base, particleCount: 60, angle: 60, spread: 60, origin: { x: 0, y: y + 0.05 } });
+      confetti({ ...base, particleCount: 60, angle: 120, spread: 60, origin: { x: 1, y: y + 0.05 } });
+    }, 220);
+  };
+  finale.addEventListener('click', celebrate);
+  if ('IntersectionObserver' in window) {
+    const once = new IntersectionObserver((entries) => {
+      if (entries.some((en) => en.isIntersecting)) { once.disconnect(); celebrate(); }
+    }, { threshold: 0.75 });
+    once.observe(finale);
+  }
+})();
+</script>
