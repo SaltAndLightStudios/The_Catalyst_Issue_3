@@ -1,0 +1,43 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+.fseventsd
+Icon?
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Secrets & local env
+.env
+.env.*
+!.env.example
+
+# Dependencies & build output (if tooling is ever added)
+node_modules/
+dist/
+build/
+.cache/
+
+# Deploy / tooling local state
+.vercel/
+.claude/settings.local.json
+
+# Logs & temp files
+*.log
+npm-debug.log*
+*.tmp
+*.bak
